@@ -79,13 +79,17 @@ float heightAt(vec2 xz) {
 // Horizon-based sky visibility from the city heightmap (street canyons).
 float skyVisibility(vec3 P, vec3 N) {
   if (uHeightMapInfo.z <= 0.0) return 1.0;
+  // Step off the surface first: the heightmap texel (4 m) would otherwise contain our own wall.
+  vec2 nh = N.xz;
+  if (dot(nh, nh) > 0.25) P.xz += normalize(nh) * 4.5;
+  P.y += 0.5;
   float vis = 0.0, wsum = 0.0;
   for (int i = 0; i < 8; ++i) {
     float a = float(i) * (PI / 4.0) + 0.3;
     vec2 dir = vec2(cos(a), sin(a));
     float maxSin = 0.0;
     for (int k = 0; k < 4; ++k) {
-      float dist = 2.5 * pow(2.3, float(k));
+      float dist = 3.0 * pow(2.3, float(k));
       float dh = heightAt(P.xz + dir * dist) - P.y;
       maxSin = max(maxSin, dh / sqrt(dh * dh + dist * dist));
     }
@@ -97,13 +101,15 @@ float skyVisibility(vec3 P, vec3 N) {
 }
 
 // True if a reflection ray leaving P along R is blocked by buildings.
-float reflectionVisibility(vec3 P, vec3 R) {
+float reflectionVisibility(vec3 P, vec3 N, vec3 R) {
   if (uHeightMapInfo.z <= 0.0) return 1.0;
+  vec2 nh = N.xz;
+  if (dot(nh, nh) > 0.25) P.xz += normalize(nh) * 4.5;
   vec2 d = normalize(R.xz + vec2(1e-5));
   float horiz = length(R.xz);
   float vis = 1.0;
   for (int k = 0; k < 5; ++k) {
-    float dist = 2.0 * pow(2.2, float(k));
+    float dist = 3.0 * pow(2.2, float(k));
     float rayH = P.y + R.y / max(horiz, 1e-3) * dist;
     float bh = heightAt(P.xz + d * dist);
     vis = min(vis, smoothstep(-0.5, 2.0, rayH - bh));
@@ -216,7 +222,7 @@ void main() {
   vec3 R = reflect(-V, N);
   float lod = rough * (uSkyMips - 2.0);
   vec3 env = textureLod(uSkyCube, R, lod).rgb;
-  float rvis = reflectionVisibility(P, R);
+  float rvis = reflectionVisibility(P, N, R);
   vec3 occluder = bounce * 0.6;
   env = mix(occluder, env, mix(rvis, 1.0, rough * 0.5));
   float specOcc = clamp(pow(NoV + ao, exp2(-16.0 * rough - 1.0)) - 1.0 + ao, 0.0, 1.0);

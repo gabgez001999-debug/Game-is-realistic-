@@ -30,7 +30,8 @@ vec3 applyFog(vec3 col, vec3 P, vec3 V, float dist) {
   float density = uFogDensity * (1.0 + uRain * 3.0);
   float fog = 1.0 - exp(-dist * density * heightFactor);
   vec3 dir = -V;
-  vec3 fogCol = textureLod(uSkyCube, normalize(vec3(dir.x, max(dir.y, 0.02), dir.z)), uSkyMips - 3.0).rgb;
+  // Aerial perspective colour: the sky just above the horizon in the view direction.
+  vec3 fogCol = textureLod(uSkyCube, normalize(vec3(dir.x, max(dir.y, 0.0) + 0.06, dir.z)), 2.5).rgb;
   float mu = max(dot(dir, uSunDir), 0.0);
   fogCol += uSunColor * pow(mu, 8.0) * 0.06;
   return mix(col, fogCol, clamp(fog, 0.0, 1.0));
@@ -54,7 +55,7 @@ void main() {
     vec3 rd = normalize(reflect(normalize(vp), vn));
     if (rd.z < 0.6) {
       float stepLen = 0.25 + dist * 0.01;
-      float jitter = hash12(gl_FragCoord.xy + fract(uTime) * 100.0);
+      float jitter = fract(52.9829189 * fract(dot(gl_FragCoord.xy + float(int(uTime * 60.0) % 8) * 5.588, vec2(0.06711056, 0.00583715))));
       vec3 ray = vp + vn * 0.05 + rd * stepLen * jitter;
       vec2 hitUV = vec2(-1.0);
       float thickness = 0.6 + dist * 0.02;

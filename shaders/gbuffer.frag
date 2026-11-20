@@ -171,7 +171,8 @@ void matSidewalk(inout Surf s) {
   base *= 0.8 + n * 0.35;
   float stain = smoothstep(0.62, 0.8, fbm(w * 0.35 + 9.0, 4));
   base *= 1.0 - stain * 0.35;
-  float gum = step(0.985, hash12(floor(w * 9.0))) * 0.5;
+  vec2 gq = fract(w * 3.0) - 0.5;
+  float gum = step(0.93, hash12(floor(w * 3.0))) * smoothstep(0.06, 0.04, length(gq)) * 0.35;
   base *= 1.0 - gum;
   base *= 1.0 - groove * 0.45;
   s.albedo = base;
@@ -304,7 +305,11 @@ void matFacade(inout Surf s) {
     glassMask = (1.0 - mull) * (1.0 - spandrel);
     albedo = mix(vec3(0.3, 0.31, 0.33), glassTint * 0.3, spandrel);
     rough = 0.35; metal = 0.6;
-    cellUV = m;
+    // One room spans four mullion bays.
+    float roomW = colW * 4.0;
+    cellUV = vec2(fract(u / roomW), m.y);
+    col = floor(u / roomW);
+    colW = roomW;
     row = floor(v / floorH);
   } else {
     glassMask = inWin;
@@ -378,8 +383,8 @@ void matRoof(inout Surf s) {
   float n = fbm(w * 0.7, 4), g = vnoise(w * 40.0);
   vec3 c = mix(vec3(0.16, 0.16, 0.17), vec3(0.32, 0.31, 0.3), n);
   c *= 0.85 + g * 0.3;
-  float membrane = step(0.6, fbm(w * 0.12 + 4.0, 3));
-  c = mix(c, vec3(0.55, 0.55, 0.53), membrane * 0.6);
+  float membrane = smoothstep(0.55, 0.62, fbm(w * 0.08 + 4.0, 3));
+  c = mix(c, vec3(0.36, 0.36, 0.35), membrane * 0.5);
   s.albedo = c;
   s.rough = 0.92;
   s.metal = 0.0;

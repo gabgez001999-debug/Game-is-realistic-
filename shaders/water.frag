@@ -58,7 +58,7 @@ void main() {
   col = mix(col, foamCol, clamp(foam, 0.0, 1.0) * 0.8);
   // Fog.
   float fog = 1.0 - exp(-dist * uFogDensity * (1.0 + uRain * 3.0));
-  vec3 fogCol = textureLod(uSkyCube, normalize(vec3(-V.x, 0.05, -V.z)), uSkyMips - 3.0).rgb;
+  vec3 fogCol = textureLod(uSkyCube, normalize(vec3(-V.x, 0.06, -V.z)), 2.5).rgb;
   col = mix(col, fogCol, fog);
   float edgeAlpha = smoothstep(0.0, 0.15, thick);
   oColor = vec4(col, edgeAlpha);

@@ -7,6 +7,7 @@ uniform sampler2D uVelocity;
 uniform sampler2D uDepth;
 uniform sampler2D uExposure;
 uniform float uBloomStrength;
+uniform float uBloomNorm;      // the upsample chain sums all mips
 uniform float uMotionBlur;      // shutter fraction (0 = off)
 uniform float uExposureBias;
 uniform float uVignette;
@@ -54,7 +55,7 @@ void main() {
       col = acc / float(S);
     }
   }
-  vec3 bloom = texture(uBloom, vUV).rgb;
+  vec3 bloom = texture(uBloom, vUV).rgb * uBloomNorm;
   col = mix(col, bloom, uBloomStrength);
 
   float avgLum = texture(uExposure, vec2(0.5)).r;

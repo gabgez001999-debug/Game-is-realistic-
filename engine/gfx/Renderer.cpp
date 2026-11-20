@@ -554,7 +554,7 @@ void Renderer::renderExposure() {
   glDisable(GL_BLEND);
   lumFbo_.bind();
   lumShader_.use();
-  lumShader_.tex("uSrc", 0, GL_TEXTURE_2D, bloomMips_.empty() ? hdr_.id : bloomMips_[0].id);
+  lumShader_.tex("uSrc", 0, GL_TEXTURE_2D, hdr_.id);
   drawFullscreen();
   lum_.generateMips();
   int next = 1 - adaptIdx_;
@@ -582,6 +582,7 @@ void Renderer::renderPost(GLuint targetFbo, int tw, int th) {
   s.tex("uDepth", 3, GL_TEXTURE_2D, gDepth_.id);
   s.tex("uExposure", 4, GL_TEXTURE_2D, adapt_[adaptIdx_].id);
   s.set("uBloomStrength", settings.bloom);
+  s.set("uBloomNorm", 1.f / float(std::max<size_t>(1, bloomMips_.size())));
   // Shutter: 180 degrees scaled by frame time (velocity is per frame).
   s.set("uMotionBlur", settings.motionBlur);
   s.set("uExposureBias", settings.exposureBias);

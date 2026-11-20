@@ -41,6 +41,10 @@ class SdlPlatform final : public Platform {
   }
 
   bool init(const PlatformConfig& cfg) override {
+    // DualSense: enable the enhanced HID report so rumble, triggers and lightbar work over Bluetooth too.
+    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5_RUMBLE, "1");
+    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5_PLAYER_LED, "1");
+    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE, "1");
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) != 0) {
       logError("SDL_Init failed: %s", SDL_GetError());
       return false;
@@ -63,7 +67,7 @@ class SdlPlatform final : public Platform {
     logInfo("OpenGL: %s | %s", (const char*)glGetString(GL_VERSION), (const char*)glGetString(GL_RENDERER));
     setMouseCaptured(true);
     for (int i = 0; i < SDL_NumJoysticks(); ++i)
-      if (SDL_IsGameController(i)) { pad_ = SDL_GameControllerOpen(i); break; }
+      if (SDL_IsGameController(i)) { openPad(i); break; }
     return true;
   }
 
@@ -89,10 +93,15 @@ class SdlPlatform final : public Platform {
         }
         case SDL_MOUSEWHEEL: in.wheel += float(e.wheel.y); break;
         case SDL_CONTROLLERDEVICEADDED:
-          if (!pad_) pad_ = SDL_GameControllerOpen(e.cdevice.which);
+          if (!pad_) openPad(e.cdevice.which);
           break;
         case SDL_CONTROLLERDEVICEREMOVED:
-          if (pad_) { SDL_GameControllerClose(pad_); pad_ = nullptr; }
+          if (pad_ && SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(pad_)) == e.cdevice.which) {
+            SDL_GameControllerClose(pad_);
+            pad_ = nullptr;
+            type_ = PadType::None;
+            logInfo("Controller disconnected");
+          }
           break;
         default: break;
       }
@@ -136,6 +145,45 @@ class SdlPlatform final : public Platform {
     SDL_SetRelativeMouseMode(c ? SDL_TRUE : SDL_FALSE);
   }
 
+  PadType padType() const override { return pad_ ? type_ : remotePad_; }
+
+  void rumble(float low, float high, int ms) override {
+    if (pad_) SDL_GameControllerRumble(pad_, Uint16(saturate(low) * 65535.f), Uint16(saturate(high) * 65535.f), Uint32(ms));
+    else if (remoteRumble) remoteRumble(low, high, ms);
+  }
+
+  void triggerEffect(int trigger, TriggerMode mode, float strength, float start) override {
+    if (!pad_ || type_ != PadType::PS5) return;
+    // Skip redundant writes (the controller is updated over HID).
+    int key = int(mode) * 1000000 + int(strength * 255.f) * 1000 + int(start * 255.f);
+    if (trigLast_[trigger & 1] == key) return;
+    trigLast_[trigger & 1] = key;
+    uint8_t state[47] = {};
+    state[0] = trigger == 0 ? 0x08 : 0x04;  // modify left / right trigger effect
+    uint8_t* fx = trigger == 0 ? &state[21] : &state[10];
+    if (mode == TriggerMode::Off) {
+      fx[0] = 0x05;
+    } else if (mode == TriggerMode::Resistance) {
+      fx[0] = 0x01;  // continuous resistance: start position, force
+      fx[1] = uint8_t(saturate(start) * 255.f);
+      fx[2] = uint8_t(saturate(strength) * 255.f);
+    } else {
+      fx[0] = 0x06;  // vibration: frequency, amplitude, start
+      fx[1] = 22;
+      fx[2] = uint8_t(saturate(strength) * 63.f);
+      fx[3] = uint8_t(saturate(start) * 255.f);
+    }
+    SDL_GameControllerSendEffect(pad_, state, sizeof(state));
+  }
+
+  void lightbar(const vec3& c) override {
+    if (!pad_) return;
+    uint32_t key = (uint32_t(saturate(c.r) * 255.f) << 16) | (uint32_t(saturate(c.g) * 255.f) << 8) | uint32_t(saturate(c.b) * 255.f);
+    if (key == ledLast_) return;
+    ledLast_ = key;
+    SDL_GameControllerSetLED(pad_, Uint8(key >> 16), Uint8(key >> 8), Uint8(key));
+  }
+
   bool startAudio(AudioCallback cb) override {
     if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) { logWarn("SDL audio unavailable: %s", SDL_GetError()); return false; }
     audioCb_ = std::move(cb);
@@ -157,7 +205,26 @@ class SdlPlatform final : public Platform {
   }
 
  private:
+  void openPad(int index) {
+    pad_ = SDL_GameControllerOpen(index);
+    if (!pad_) return;
+    switch (SDL_GameControllerGetType(pad_)) {
+      case SDL_CONTROLLER_TYPE_PS5: type_ = PadType::PS5; break;
+      case SDL_CONTROLLER_TYPE_PS4: type_ = PadType::PS4; break;
+      case SDL_CONTROLLER_TYPE_XBOX360:
+      case SDL_CONTROLLER_TYPE_XBOXONE: type_ = PadType::Xbox; break;
+      case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_PRO: type_ = PadType::Switch; break;
+      default: type_ = PadType::Other; break;
+    }
+    trigLast_[0] = trigLast_[1] = -1;
+    ledLast_ = 0xFFFFFFFFu;
+    logInfo("Controller connected: %s%s", SDL_GameControllerName(pad_), type_ == PadType::PS5 ? " (DualSense: rumble, adaptive triggers, lightbar)" : "");
+  }
+
   SDL_Window* win_ = nullptr;
+  PadType type_ = PadType::None;
+  int trigLast_[2] = {-1, -1};
+  uint32_t ledLast_ = 0xFFFFFFFFu;
   SDL_GLContext ctx_ = nullptr;
   SDL_GameController* pad_ = nullptr;
   SDL_AudioDeviceID audioDev_ = 0;
