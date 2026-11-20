@@ -6,27 +6,26 @@ Ein Open-World-Spiel mit eigener C++-Engine (**Veritas Engine**). Es läuft im F
 
 ---
 
-## Spielen über die Cloud (Modal)
+## Spielen über die Cloud: Lightning AI (ohne Kreditkarte)
 
-Der GPU-Server läuft bei [Modal](https://modal.com). Für GPUs musst du dort eine Zahlungsmethode hinterlegen, jeden Monat sind aber **30 $ Guthaben gratis** dabei. Mit einer L4-GPU reicht das für etwa 37 Stunden. Nach 90 Sekunden ohne Spieler fährt der Server automatisch herunter.
+[Lightning AI](https://lightning.ai) stellt Cloud-PCs mit Nvidia-GPU bereit. Nach eigenen Angaben gibt es dort **ohne Kreditkarte** 5 Gratis-Credits. Du brauchst ein Konto (E-Mail, laut FAQ eventuell eine Telefonnummer).
 
-**Einmalig einrichten** (Terminal auf dem Mac):
+1. Bei [lightning.ai](https://lightning.ai) anmelden und ein **Studio** öffnen.
+2. Oben rechts die Maschine auf eine **GPU** umstellen (T4 oder L4).
+3. Im Studio das **Terminal** öffnen und diesen einen Befehl einfügen:
 
-```bash
-pip3 install modal
-python3 -m modal setup            # im Browser einloggen, z. B. "Continue with GitHub"
-curl -O https://raw.githubusercontent.com/gabgez001999-debug/Game-is-realistic-/claude/busy-cori-rpsiis/cloud/modal_app.py
-python3 -m modal deploy modal_app.py
-```
+   ```bash
+   curl -sL https://raw.githubusercontent.com/gabgez001999-debug/Game-is-realistic-/claude/busy-cori-rpsiis/cloud/lightning_start.sh | bash
+   ```
 
-Der letzte Befehl zeigt deinen **Zugangsschlüssel** und eine Adresse wie
-`https://DEINNAME--game-is-realistic-api.modal.run`.
+4. Nach 2–4 Minuten erscheint **DEIN SPIEL-LINK** (`https://….trycloudflare.com/?token=…`). Öffne ihn im Browser. Es kommt das Intro, dann drückst du **START**, und das Spiel startet auf dem Cloud-PC.
+5. Nach 5 Minuten ohne Spieler beendet sich das Spiel und stoppt das Studio, damit die Gratis-Credits nicht verbraucht werden.
 
-**Spielen:** Öffne `https://DEINNAME--game-is-realistic-api.modal.run/?key=DEIN-SCHLÜSSEL`. Es folgen das 3D-Intro und der START-Knopf. Nach einem Klick fährt der GPU-PC hoch und startet das Spiel automatisch (20–90 Sekunden), dann läuft es im Vollbild im Browser.
+Der Link läuft über einen kostenlosen [Cloudflare Quick Tunnel](https://try.cloudflare.com), dafür braucht es kein Konto. Der Token im Link sorgt dafür, dass nur du dich verbinden kannst.
 
-* GPU wählen: `GIR_GPU=L40S python3 -m modal deploy modal_app.py` (`T4`, `L4`, `A10`, `L40S`, `RTX-PRO-6000`)
-* Browser: Chrome, Edge oder Safari 17+ (für den Video-Decoder WebCodecs)
-* Controller: PS5-DualSense per Bluetooth oder USB mit dem Gerät koppeln, er wird erkannt.
+## Alternative: Modal (Zahlungsmethode für GPUs nötig)
+
+`cloud/modal_app.py`: Website und API auf Modal, der GPU-PC startet erst beim Klick auf START. Für GPUs verlangt Modal eine hinterlegte Zahlungsmethode, dafür gibt es jeden Monat 30 $ Guthaben. Anleitung steht oben in der Datei.
 
 ## Selbst bauen (macOS / Linux)
 
