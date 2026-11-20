@@ -79,7 +79,7 @@ $("start-btn").addEventListener("click", async () => {
   setStep("request", "", 5);
   try {
     if (await directServer()) {
-      setStep("stream", "Spiel-Server gefunden", 85);
+      setStep("game", "Spiel wird auf dem Cloud-PC gestartet…", 70);
       connect(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws?token=${encodeURIComponent(params.get("token") || store.get("token"))}`);
       return;
     }
@@ -171,7 +171,7 @@ function connect(url) {
   ws.binaryType = "arraybuffer";
   ws.onopen = () => {
     ws.send(JSON.stringify({ t: "hello", pad: padType(), w: screen.width, h: screen.height }));
-    setStep("stream", "Warte auf erstes Bild…", 95);
+    setStep("game", "Cloud-PC startet das Spiel… (einige Sekunden)", 80);
   };
   ws.onmessage = (ev) => {
     if (typeof ev.data === "string") return onText(JSON.parse(ev.data));
@@ -188,6 +188,7 @@ function connect(url) {
 
 function onText(m) {
   if (m.type === "config") {
+    setStep("stream", "Erstes Bild kommt…", 95);
     cfg = m;
     screen.width = m.width;
     screen.height = m.height;

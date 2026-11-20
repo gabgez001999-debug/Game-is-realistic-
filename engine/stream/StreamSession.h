@@ -21,6 +21,7 @@ struct StreamConfig {
   std::string webRoot;
   std::string token;        // required in /ws?token=... when non-empty
   float idleExitSeconds = 0; // exit when no client for this long (0 = never)
+  float firstClientWait = 1800; // before the first player arrives, wait at most this long
   std::string encoder;      // force "libx264" / "h264_nvenc"
 };
 
@@ -66,6 +67,7 @@ class StreamSession {
   std::atomic<bool> forceKey_{true};
   std::atomic<bool> configSent_{false};
   std::atomic<double> lastActivity_{0.0};
+  std::atomic<bool> everConnected_{false};
   int64_t startUs_ = 0;
   float mbps_ = 0.f;
   std::string renderer_;

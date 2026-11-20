@@ -59,6 +59,7 @@ bool StreamSession::start(const StreamConfig& cfg, Platform& platform, AudioCall
   server_.onConnection = [this](bool c) {
     lastActivity_ = double(nowUs()) * 1e-6;
     if (c) {
+      everConnected_ = true;
       configSent_ = false;
       forceKey_ = true;
     } else {
@@ -90,7 +91,9 @@ void StreamSession::stop() {
 
 bool StreamSession::shouldExit() const {
   if (cfg_.idleExitSeconds <= 0.f || server_.connected()) return false;
-  return double(nowUs()) * 1e-6 - lastActivity_.load() > double(cfg_.idleExitSeconds);
+  double idle = double(nowUs()) * 1e-6 - lastActivity_.load();
+  if (!everConnected_) return idle > double(std::max(cfg_.idleExitSeconds, cfg_.firstClientWait));
+  return idle > double(cfg_.idleExitSeconds);
 }
 
 void StreamSession::sendConfig() {

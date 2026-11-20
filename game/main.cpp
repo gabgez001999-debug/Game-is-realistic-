@@ -7,6 +7,7 @@
 //
 // Options: --width N --height N --time HOURS --view N --port N --fps N --bitrate KBPS
 //          --token STR --idle-exit SECONDS --web DIR --encoder NAME --fullscreen
+//          --lazy-start  (stream mode: serve the website, launch the game when a player presses START)
 #include <chrono>
 #include <cstring>
 #include <thread>
@@ -20,7 +21,7 @@
 using namespace vx;
 
 struct Args {
-  bool stream = false, fullscreen = false;
+  bool stream = false, fullscreen = false, lazyStart = false;
   std::string shot;
   int width = 0, height = 0, view = -1, port = 8080, fps = 60, bitrate = 0, frames = 3;
   float time = 16.5f, idleExit = 0.f;
@@ -33,6 +34,7 @@ static Args parseArgs(int argc, char** argv) {
     std::string s = argv[i];
     auto next = [&]() -> std::string { return i + 1 < argc ? argv[++i] : ""; };
     if (s == "--stream") a.stream = true;
+    else if (s == "--lazy-start") a.lazyStart = true;
     else if (s == "--fullscreen") a.fullscreen = true;
     else if (s == "--shot") a.shot = next();
     else if (s == "--width") a.width = std::stoi(next());
@@ -83,18 +85,24 @@ int main(int argc, char** argv) {
 
   game::GameOptions opt;
   opt.timeOfDay = args.time;
-  game::Game g;
-  if (!g.init(*platform, opt)) return 1;
-  applyView(g, args.view);
+  std::unique_ptr<game::Game> g;
+  auto launchGame = [&]() {
+    g = std::make_unique<game::Game>();
+    if (!g->init(*platform, opt)) return false;
+    applyView(*g, args.view);
+    return true;
+  };
+  bool lazy = args.lazyStart && args.stream;
+  if (!lazy && !launchGame()) return 1;
 
   // --- Screenshot mode -------------------------------------------------------
   if (!args.shot.empty()) {
     Input in;
     for (int f = 0; f < args.frames; ++f) {
-      g.update(in, 1.f / 60.f);
-      g.render(platform->outputFramebuffer(), platform->width(), platform->height());
+      g->update(in, 1.f / 60.f);
+      g->render(platform->outputFramebuffer(), platform->width(), platform->height());
     }
-    g.renderer().screenshot(platform->outputFramebuffer(), platform->width(), platform->height(), args.shot);
+    g->renderer().screenshot(platform->outputFramebuffer(), platform->width(), platform->height(), args.shot);
     return 0;
   }
 
@@ -132,13 +140,21 @@ int main(int argc, char** argv) {
 #if defined(VERITAS_HAS_STREAMING)
     if (stream) {
       if (stream->shouldExit()) { logInfo("No player connected - shutting down"); break; }
+      if (!g) {
+        // Lobby: only the website is served until a player presses START.
+        if (!stream->clientConnected()) { std::this_thread::sleep_for(std::chrono::milliseconds(50)); last = clock::now(); continue; }
+        logInfo("Player pressed START - launching the game");
+        if (!launchGame()) return 1;
+        last = clock::now();
+        continue;
+      }
       char info[96];
       std::snprintf(info, sizeof(info), "CLOUD %.1f MBIT/S %s", double(stream->bitrateMbps()), stream->clientConnected() ? "VERBUNDEN" : "WARTET");
-      g.setStreamInfo(info);
+      g->setStreamInfo(info);
     }
 #endif
-    g.update(in, dt);
-    g.render(platform->outputFramebuffer(), platform->width(), platform->height());
+    g->update(in, dt);
+    g->render(platform->outputFramebuffer(), platform->width(), platform->height());
 #if defined(VERITAS_HAS_STREAMING)
     if (stream) stream->captureFrame(platform->outputTexture());
 #endif
