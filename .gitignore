@@ -1,0 +1,6 @@
+build/
+build-*/
+*.png
+!web/*.png
+.DS_Store
+compile_commands.json
