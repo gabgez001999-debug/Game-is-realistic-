@@ -90,6 +90,7 @@ class HeadlessPlatform final : public Platform {
   int width() const override { return w_; }
   int height() const override { return h_; }
   unsigned outputFramebuffer() const override { return fbo_; }
+  unsigned outputTexture() const override { return tex_; }
   bool isHeadless() const override { return true; }
 
  private:

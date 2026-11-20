@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Game is Realistic</title>
+  <meta name="theme-color" content="#05060a">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    { "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    } }
+  </script>
+</head>
+<body>
+  <!-- 3D intro -->
+  <canvas id="intro"></canvas>
+  <div id="vignette"></div>
+
+  <div id="title-overlay" class="hidden">
+    <div class="tagline">VERITAS ENGINE &middot; CLOUD EDITION</div>
+  </div>
+
+  <div id="start-wrap" class="hidden">
+    <button id="start-btn" type="button"><span>START</span></button>
+    <div id="start-sub">Cloud-PC mit GPU wird beim Start hochgefahren</div>
+    <button id="settings-btn" type="button" title="Einstellungen">Einstellungen</button>
+  </div>
+
+  <!-- Launch progress -->
+  <div id="launch" class="hidden">
+    <div class="launch-box">
+      <div class="launch-title">VERBINDE MIT CLOUD-PC</div>
+      <ol id="steps">
+        <li data-step="request">Anfrage an den Cloud-Server</li>
+        <li data-step="gpu">GPU-PC f&auml;hrt hoch</li>
+        <li data-step="game">Spiel wird gestartet</li>
+        <li data-step="stream">Stream wird verbunden</li>
+      </ol>
+      <div id="launch-msg"></div>
+      <div class="bar"><div id="launch-bar"></div></div>
+      <button id="cancel-btn" type="button">Abbrechen</button>
+    </div>
+  </div>
+
+  <!-- Game stream -->
+  <div id="player" class="hidden">
+    <canvas id="screen"></canvas>
+    <div id="stats"></div>
+    <div id="hint">Klicken zum Steuern &middot; ESC gibt die Maus frei &middot; PS5-Controller wird automatisch erkannt</div>
+    <button id="quit-btn" type="button">Beenden</button>
+  </div>
+
+  <!-- Settings dialog -->
+  <dialog id="settings">
+    <form method="dialog">
+      <h2>Einstellungen</h2>
+      <label>Cloud-Server (Modal-Adresse)
+        <input id="api-url" type="url" placeholder="https://dein-name--game-is-realistic-api.modal.run" autocomplete="off">
+      </label>
+      <label>Zugangsschl&uuml;ssel
+        <input id="api-key" type="password" placeholder="wird beim Einrichten angezeigt" autocomplete="off">
+      </label>
+      <label>Aufl&ouml;sung
+        <select id="res">
+          <option value="1280x720">1280 &times; 720 (schnell)</option>
+          <option value="1600x900">1600 &times; 900</option>
+          <option value="1920x1080">1920 &times; 1080 (beste Qualit&auml;t)</option>
+        </select>
+      </label>
+      <p class="small">Wird diese Seite direkt vom Spiel-Server geladen, wird sofort verbunden.</p>
+      <menu><button value="ok" id="settings-ok">Speichern</button></menu>
+    </form>
+  </dialog>
+
+  <div id="toast" class="hidden"></div>
+
+  <script type="module" src="intro.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

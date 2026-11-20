@@ -705,7 +705,7 @@ void City::submit(Renderer& r, const vec3& camPos, float night, float alpha) {
         DrawItem lens = it;
         lens.mesh = propMeshes[size_t(lensMeshes_[k])].get();
         lens.castShadow = false;
-        lens.params[0].w = (k == st) ? 1.f : 0.03f;
+        lens.params[0].w = (k == st) ? 1.f : 0.004f;
         r.submit(lens);
       }
     }

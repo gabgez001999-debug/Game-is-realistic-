@@ -1,0 +1,116 @@
+:root {
+  --bg: #05060a;
+  --fg: #f4f1ea;
+  --muted: rgba(244, 241, 234, 0.62);
+  --accent: #ffb347;
+  --accent2: #ff4f6d;
+  --glass: rgba(10, 12, 20, 0.62);
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--fg);
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.hidden { display: none !important; }
+
+#intro { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+#vignette {
+  position: fixed; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 55%, transparent 45%, rgba(0, 0, 0, 0.75) 100%);
+}
+
+#title-overlay {
+  position: fixed; left: 0; right: 0; top: 70%; text-align: center; pointer-events: none;
+  animation: fadeUp 2.2s ease forwards;
+}
+.tagline { letter-spacing: 0.55em; font-size: clamp(10px, 1.2vw, 15px); color: var(--muted); }
+
+#start-wrap {
+  position: fixed; left: 0; right: 0; bottom: 9vh; display: flex; flex-direction: column;
+  align-items: center; gap: 14px; animation: fadeUp 1.4s ease forwards;
+}
+#start-btn {
+  position: relative; border: 1px solid rgba(255, 255, 255, 0.35); background: rgba(255, 255, 255, 0.04);
+  color: var(--fg); font-size: clamp(18px, 2vw, 26px); letter-spacing: 0.6em; padding: 18px 54px 18px 64px;
+  cursor: pointer; overflow: hidden; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 0 40px rgba(255, 179, 71, 0.15);
+}
+#start-btn::before {
+  content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-20deg); animation: sheen 3.2s ease-in-out infinite;
+}
+#start-btn:hover, #start-btn:focus-visible {
+  transform: scale(1.04); border-color: var(--accent); outline: none;
+  box-shadow: 0 0 60px rgba(255, 179, 71, 0.35);
+}
+#start-sub { color: var(--muted); font-size: 13px; letter-spacing: 0.08em; }
+#settings-btn {
+  background: none; border: none; color: var(--muted); font-size: 12px; letter-spacing: 0.15em;
+  text-decoration: underline; cursor: pointer;
+}
+
+#launch { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, 0.55); }
+.launch-box {
+  width: min(520px, 92vw); padding: 28px 30px; background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+}
+.launch-title { letter-spacing: 0.35em; font-size: 14px; margin-bottom: 18px; color: var(--accent); }
+#steps { list-style: none; padding: 0; margin: 0 0 18px; }
+#steps li { padding: 7px 0 7px 26px; position: relative; color: rgba(244, 241, 234, 0.4); }
+#steps li::before {
+  content: ""; position: absolute; left: 4px; top: 13px; width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+}
+#steps li.active { color: var(--fg); }
+#steps li.active::before { background: var(--accent); box-shadow: 0 0 12px var(--accent); animation: pulse 1s infinite; }
+#steps li.done { color: var(--muted); }
+#steps li.done::before { background: #6be38c; }
+#launch-msg { min-height: 20px; font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+.bar { height: 3px; background: rgba(255, 255, 255, 0.1); overflow: hidden; margin-bottom: 18px; }
+#launch-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.6s ease; }
+#cancel-btn, #quit-btn {
+  background: none; border: 1px solid rgba(255, 255, 255, 0.25); color: var(--fg); padding: 8px 18px;
+  letter-spacing: 0.15em; cursor: pointer;
+}
+
+#player { position: fixed; inset: 0; background: #000; }
+#screen { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+#stats {
+  position: absolute; top: 10px; right: 12px; font: 12px/1.4 ui-monospace, Menlo, monospace;
+  color: rgba(255, 255, 255, 0.75); text-shadow: 0 1px 2px #000; text-align: right; pointer-events: none;
+}
+#hint {
+  position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; font-size: 13px;
+  color: rgba(255, 255, 255, 0.7); text-shadow: 0 1px 3px #000; pointer-events: none; transition: opacity 1s;
+}
+#quit-btn { position: absolute; top: 10px; left: 12px; background: rgba(0, 0, 0, 0.35); font-size: 12px; }
+
+dialog {
+  background: #0d0f16; color: var(--fg); border: 1px solid rgba(255, 255, 255, 0.15); width: min(560px, 94vw); padding: 24px;
+}
+dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+dialog h2 { margin: 0 0 16px; font-weight: 400; letter-spacing: 0.2em; font-size: 16px; }
+dialog label { display: block; margin-bottom: 14px; font-size: 13px; color: var(--muted); }
+dialog input, dialog select {
+  display: block; width: 100%; margin-top: 6px; padding: 10px; background: #05060a; color: var(--fg);
+  border: 1px solid rgba(255, 255, 255, 0.2); font-size: 14px;
+}
+dialog menu { padding: 0; margin: 10px 0 0; text-align: right; }
+dialog menu button { background: var(--accent); color: #111; border: none; padding: 10px 22px; cursor: pointer; letter-spacing: 0.1em; }
+.small { font-size: 12px; color: var(--muted); }
+
+#toast {
+  position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); background: var(--glass); padding: 12px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.15); font-size: 14px; max-width: 90vw; text-align: center;
+}
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes sheen { 0% { left: -60%; } 55%, 100% { left: 130%; } }
+@keyframes pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) {
+  #start-btn::before, #steps li.active::before { animation: none; }
+}

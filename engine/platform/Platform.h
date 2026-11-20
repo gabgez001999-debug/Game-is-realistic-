@@ -33,6 +33,8 @@ class Platform {
   virtual int height() const = 0;
   // Framebuffer the final image is rendered into (0 = window back buffer).
   virtual unsigned outputFramebuffer() const = 0;
+  // Color texture of the output framebuffer (headless only; 0 for a window).
+  virtual unsigned outputTexture() const { return 0; }
   virtual void setMouseCaptured(bool) {}
   virtual bool mouseCaptured() const { return true; }
   virtual bool startAudio(AudioCallback) { return false; }
